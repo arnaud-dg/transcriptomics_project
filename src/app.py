@@ -1,8 +1,10 @@
-# Generic packages
+# Importing necessary libraries
+# # Generic packages
 import pandas as pd
 import numpy as np
 import seaborn as sns
 import scipy.stats as stats
+import pickle
 
 # Graphical packages
 import matplotlib.pyplot as plt
@@ -12,7 +14,7 @@ import seaborn as sns
 # Dash related packages
 import dash
 from dash import dcc, html
-from dash.dependencies import Input, Output, callback
+from dash.dependencies import Input, Output
 import dash_bio as dashbio
 
 # Biocomputing related packages
@@ -23,40 +25,26 @@ from sanbomics.plots import volcano
 import scanpy as sc # PCA library
 
 # Data Loading
-data = pd.read_csv('../data/raw/GSE178491_KD.csv', sep=",")
+sigs = pd.read_csv('../data/preprocessed/sigs.csv', sep=",")
+grapher = pd.read_csv('../data/preprocessed/grapher.csv', sep=",")
+with open('../models/dds_object.pkl', 'rb') as f:
+    dds = pickle.load(f)
 
-# Data Preprocessing
-data = data.set_index('ensembl_gene_id')
-data = data.drop('genename', axis=1)
-data = data[data.sum(axis=1) > 0]
-data = data.T
-for col in data.select_dtypes(include=['float64', 'int64']).columns:
-    data[col] = data[col].astype(int)
+# Initializing 
+color_map = {
+    'Not significant': '#D3D3D3',  # tomato color
+    'Upregulated': '#1E90FF',  # tomato color
+    'Downregulated': '#FF6347',  # dodger blue color
+}
 
-# Metadata creation
-sample_list = list(data.index)
-condition_list = ['Kawa' if item.startswith('KD') else 'Ctrl' for item in sample_list]
-metadata = pd.DataFrame(zip(sample_list, condition_list), columns = ['Sample', 'Condition'])
-metadata = metadata.set_index('Sample')
-
-# Creation of the dds object
-dds = DeseqDataSet(counts=data, 
-                   metadata=metadata,
-                   design_factors="Condition")
-dds.deseq2()
-stat_res = DeseqStats(dds, contrast = ['Condition', 'Kawa', 'Ctrl'])
-stat_res.summary()
-res = stat_res.results_df
-
-# Customization of the dds object
-mapper = id_map(species = 'human')
-res['Symbol'] = res.index.map(mapper.mapper)
-res['-log10(pValue)'] = -np.log10(res['pvalue'])
-sigs = res[(res.baseMean >= 10) & (res.padj < 0.05) & (abs(res.log2FoldChange) > 0.5) & (res.Symbol.isna() == False)]
-dds.layers['log1p'] = np.log1p(dds.layers['normed_counts'])
-dds_sigs = dds[:, sigs.index]
-grapher = pd.DataFrame(dds_sigs.layers['log1p'].T, 
-                       index=dds_sigs.var_names, columns=dds_sigs.obs_names)
+sigs['Significance'] = np.abs(np.log10(sigs['pvalue']))
+sigs['sorter'] = sigs['Significance']*sigs['log2FoldChange']
+conditions = [
+    (sigs['Significance'] <= 20) & ((sigs['log2FoldChange'] <= 2) | (sigs['log2FoldChange'] >= -2)),
+    (sigs['Significance'] > 20) & (sigs['log2FoldChange'] > 2),
+    (sigs['Significance'] > 20) & (sigs['log2FoldChange'] < -2)
+]
+sigs['label'] = np.select(conditions, ['Not significant', 'Upregulated', 'Downregulated'], default='Not significant')
 
 # Initialize the Dash app
 app = dash.Dash(__name__)
@@ -64,13 +52,18 @@ app = dash.Dash(__name__)
 # Define the layout of the app
 app.layout = html.Div([
     html.Div([
-        html.H2('Sidebar'),
+        html.H2('Navigation menu'),
         dcc.Dropdown(
-            id='dropdown',
+            id='disease_dropdown',
             options=["Kawasaki Disease", "Parkinson Disease", "Melanoma"],
             value='Kawasaki Disease'
-        )
-    ], style={'width': '20%', 'display': 'inline-block', 'vertical-align': 'top'}),
+        ),
+        dcc.Slider(2, 14, 2,
+            id='num_genes',
+            value=8,
+        ),
+        html.Div(id='slider-output-container')
+    ], style={'width': '15%', 'display': 'inline-block', 'vertical-align': 'top'}),
     
     html.Div([
         html.Div([
@@ -88,7 +81,7 @@ app.layout = html.Div([
         html.Div([
             dcc.Graph(id='graph-4')
         ], style={'width': '48%', 'display': 'inline-block'})
-    ], style={'width': '75%', 'display': 'inline-block', 'vertical-align': 'top'})
+    ], style={'width': '85%', 'display': 'inline-block', 'vertical-align': 'top'})
 ])
 
 # Define the callback to update the graphs
@@ -97,43 +90,77 @@ app.layout = html.Div([
      Output('graph-2', 'figure'),
      Output('graph-3', 'figure'),
      Output('graph-4', 'figure')],
-    [Input('dropdown', 'value')]
+    [Input('disease_dropdown', 'value'),
+     Input('num_genes', 'value')]
 )
-def update_graphs(selected_value):
+
+def update_graphs(selected_value, num_genes):
     
+    
+    num_genes = int(num_genes/2)
+
+    label_df = pd.concat(
+            (sigs.sort_values('sorter')[-num_genes:],
+            sigs.sort_values('sorter')[0 : num_genes]))
+    list_annotation = list(label_df['Symbol'])
+
     # Volcano plot
-    fold_change_threshold = 1
-    p_value_threshold = 0.05
-    conditions = [
-        (res['log2FoldChange'] > fold_change_threshold) & (res['pvalue'] < p_value_threshold),
-        (res['log2FoldChange'] < -fold_change_threshold) & (res['pvalue'] < p_value_threshold)
-    ]
-    choices = ['Upregulated', 'Downregulated']
-    res['Significance'] = np.select(conditions, choices, default='Not significant')
-    fig1 = px.scatter(
-        res, 
-        x='log2FoldChange', 
-        y='-log10(pValue)',
-        title='Volcano Plot',
+    volcano = px.scatter(sigs, 
+                    x='log2FoldChange', y='Significance', 
+                     color='label', color_discrete_map=color_map)
+
+    volcano.update_layout(
+        title={'text': 'Volcano plot - Kawasaki Disease Differential Expression','x': 0.5,'xanchor': 'center'},
+        xaxis_title={'text': 'log<sub>2</sub> Fold Change','standoff': 20},
+        yaxis_title={'text': 'Significance -log<sub>10</sub>(pValue)','standoff': 20},
+        template="seaborn",
+        # width=800, height=800,
+        legend=dict(
+            x=1, y=1,
+            xanchor='right', yanchor='top',
+            bgcolor='rgba(255, 255, 255, 0)'  # Set a semi-transparent white background for the legend
+        ),
+        legend_title_text='Genes DE'
     )
 
-    fig2 = dashbio.Clustergram(
-        data=res.loc[rows].values,
+    volcano.add_hline(y=1.5, line_width=1, line_dash="dash", line_color="grey")
+    volcano.add_vline(x=1, line_width=1, line_dash="dash", line_color="grey")
+    volcano.add_vline(x=-1, line_width=1, line_dash="dash", line_color="grey")
+
+    # Add annotations for each Symbol in the DataFrame
+    for symbol in list_annotation:
+        row = sigs[sigs['Symbol'] == symbol].iloc[0]
+        volcano.add_annotation(
+            x=row['log2FoldChange'], y=row['Significance'],
+            text=row['Symbol'], font=dict(size=12),
+            xanchor='left', yanchor='middle',
+            showarrow=False, opacity=0.7
+        )
+
+    columns = list(grapher.columns.values)
+    rows = list(grapher.index)
+    clustermap=dashbio.Clustergram(
+        data=grapher,
         column_labels=columns,
         row_labels=rows,
+        color_map='RdBu',
         color_threshold={
-            'row': 250,
-            'col': 700
+            'row': 40,
+            'col': 7
         },
-        hidden_labels='row',
-        height=800,
-        width=700
+        # height=800, width=800
     )
 
-    fig3 = px.scatter(res, x='baseMean', y='log2FoldChange', title='Scatter Plot')
-    fig4 = px.scatter(res, x='baseMean', y='log2FoldChange', title='Scatter Plot')
+    # for trace in clustermap['data']:
+    #     if trace['type'] == 'heatmap':
+    #         trace['showscale'] = False
+
+    fig1 = px.scatter(sigs, x='baseMean', y='log2FoldChange', title='Scatter Plot 1')
+    fig2 = px.scatter(sigs, x='baseMean', y='log2FoldChange', title='Scatter Plot 1')
+    fig3 = px.scatter(sigs, x='baseMean', y='log2FoldChange', title='Scatter Plot 1')
+    fig4 = px.scatter(sigs, x='baseMean', y='log2FoldChange', title='Scatter Plot 2')
     
-    return fig1, fig2, fig3, fig4
+    return volcano, fig2, fig3, fig4
 
 # Run the app
 if __name__ == '__main__':
