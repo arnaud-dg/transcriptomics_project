@@ -1,2 +1,6 @@
 *.pkl
 *.csv
+*.ipynb
+*.txt
+*.obo
+notebooks/gene2go

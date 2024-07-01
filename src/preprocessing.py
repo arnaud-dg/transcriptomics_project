@@ -54,10 +54,20 @@ res['Symbol'] = res.index.map(mapper.mapper)
 res['-log10(pValue)'] = -np.log10(res['pvalue'])
 sigs = res[(res['baseMean'] >= 5) & (res['padj'] < 0.05) & (abs(res['log2FoldChange']) > 0.025) & (res['Symbol'].notna())]
 
+# Identification of 20 main significance genes
+sigs['Significance'] = np.abs(np.log10(sigs['pvalue']))
+sigs['sorter'] = sigs['Significance']*sigs['log2FoldChange']
+num_genes = 15
+label_df = pd.concat((sigs.sort_values('sorter')[-num_genes:], sigs.sort_values('sorter')[0 : num_genes]))
+list_annotation = list(label_df['Symbol'])
+
 # Log-transform normalized counts and filter significant genes
 dds.layers['log1p'] = np.log1p(dds.layers['normed_counts'])
 dds_sigs = dds[:, sigs.index]
-grapher = pd.DataFrame(dds_sigs.layers['log1p'].T, index=dds_sigs.var_names, columns=dds_sigs.obs_names)
+
+dds_sub = dds[:, sigs[sigs.Symbol.isin(list_annotation)].index]
+grapher = pd.DataFrame(dds_sub.layers['log1p'].T, index=dds_sub.var_names, columns=dds_sub.obs_names)
+grapher.index = grapher.index.map(mapper.mapper)
 
 # Save the preprocessed files
 # sigs dataframe
@@ -66,4 +76,4 @@ sigs.to_csv('../data/preprocessed/sigs.csv', sep=",")
 grapher.to_csv('../data/preprocessed/grapher.csv', sep=",")
 #dds object
 with open('../models/dds_object.pkl', 'wb') as f:
-    pickle.dump(dds, f)
+    pickle.dump(dds_sigs, f)
