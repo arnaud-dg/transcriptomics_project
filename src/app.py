@@ -1,19 +1,21 @@
-# Importing necessary libraries
 # # Generic packages
 import pandas as pd
 import numpy as np
 import seaborn as sns
 import scipy.stats as stats
 import pickle
+import random
+import os
 
 # Graphical packages
 import matplotlib.pyplot as plt
 import plotly.express as px
+import plotly.graph_objects as go
 import seaborn as sns
 
 # Dash related packages
 import dash
-from dash import dcc, html
+from dash import Dash, dcc, html
 from dash.dependencies import Input, Output
 import dash_bootstrap_components as dbc
 import dash_bio as dashbio
@@ -25,15 +27,26 @@ from sanbomics.tools import id_map
 from sanbomics.plots import volcano
 import scanpy as sc # PCA library
 
-# Data Loading
+# Functions
+from charts import *
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(current_dir)
+
+app = Dash(__name__, external_stylesheets=[dbc.themes.FLATLY], assets_folder="../assets")
+
 sigs = pd.read_csv('../data/preprocessed/sigs.csv', sep=",")
 grapher = pd.read_csv('../data/preprocessed/grapher.csv', sep=",")
 with open('../models/dds_object.pkl', 'rb') as f:
     dds = pickle.load(f)
+sigs['Significance'] = np.abs(np.log10(sigs['pvalue']))
+sigs['sorter'] = sigs['Significance']*sigs['log2FoldChange']
 
 patient_list = ['KD1','KD2','KD3','KD4','KD5','KD6','KD7','KD8','KD9','KD10','KD11','KD12','KD13','KD14','KD15','KD16','KD17','KD18','KD19','KD20',
-                'control1','control2','control3','control4','control5','control6','control7','control8','control9','control10','control11','control12',
-                'control13','control14','control15','control16','control17','control18','control19','control20']
+                'control1','control2','control3','control4','control5','control6','control7','control8','control9','control10','control11','control12','control13'
+                ,'control14','control15','control16']
+patient_list_init = ['KD1','KD2','KD3','KD4','KD5','KD6','KD7','KD8','KD9','KD10','KD11','KD12','KD13','KD14','KD15','KD16','KD17','KD18','KD19','KD20',
+                'control1','control2','control3','control4','control5','control6','control7','control8','control9','control10']
 
 # Initializing 
 color_map = {
@@ -42,74 +55,131 @@ color_map = {
     'Downregulated': '#FF6347',  # dodger blue color
 }
 
-sigs['Significance'] = np.abs(np.log10(sigs['pvalue']))
-sigs['sorter'] = sigs['Significance']*sigs['log2FoldChange']
-conditions = [
-    (sigs['Significance'] <= 20) & ((sigs['log2FoldChange'] <= 2) | (sigs['log2FoldChange'] >= -2)),
-    (sigs['Significance'] > 20) & (sigs['log2FoldChange'] > 2),
-    (sigs['Significance'] > 20) & (sigs['log2FoldChange'] < -2)
-]
-sigs['label'] = np.select(conditions, ['Not significant', 'Upregulated', 'Downregulated'], default='Not significant')
+fig = go.Figure(
+    go.Scattergl(
+        x = np.random.randn(1000),
+        y = np.random.randn(1000),
+        mode='markers',
+        marker=dict(color=random.sample(['#ecf0f1']*500 + ["#3498db"]*500, 1000), line_width=1)
+    )
+)
+fig.update_layout(plot_bgcolor='#FFFFFF', #width=500, height=400,
+                  xaxis_visible=False, yaxis_visible=False, showlegend=False, margin=dict(l=0,r=0,t=0,b=0))
 
-# Initialize the Dash app
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.MINTY, dbc.icons.FONT_AWESOME])
-
-# Define the layout of the app
+####################################  LAYOUT  ####################################
 app.layout = dbc.Container([
-    dbc.Row([
-        #########################################  Sidebar  #########################################
-        dbc.Col([
-            html.H1([
-                html.Span("Welcome"),
-                html.Br(),
-                html.Span("to the ""omics"" buddy 🤖!")
-            ]),
-            dcc.Dropdown(
-                id='disease_dropdown',
-                options=[{'label': disease, 'value': disease} for disease in ["Kawasaki Disease", "Parkinson Disease", "Melanoma"]],
-                value='Kawasaki Disease'
-            ),
-            dcc.Slider(2, 14, 2,
-                id='num_genes',
-                value=8,
-            ),
-            dcc.Dropdown(
-                id='patient_selection',
-                options=[{'label': patient, 'value': patient} for patient in list(grapher.drop('ensembl_gene_id', axis=1).columns)],
-                value=patient_list,
-                multi=True
-            ),
-        ], style={'width': '15%'}),  # Ajuster la largeur de la colonne pour le menu de navigation
+    # Sidebar
+    html.Div([
+        # Sidebar - Header
+        html.Div([
+            html.H1("Welcome to the ""OMIX"" buddy 🤖!"),
+            html.P("A tool to help pharma R&D teams to perform Differential Expression analysis with transcriptomics data.")
+        ], style={"vertical-alignment": "top", "height": 260}),
 
-        #########################################  Charts x4  #########################################
-        dbc.Col([
-            dbc.Row([
-                dbc.Col(dcc.Graph(id='graph-1', config={'displaylogo': False})),
-                dbc.Col(dcc.Graph(id='graph-2', config={'displaylogo': False}))
-            ]),
+        # Sidebar - Diseases selection
+        html.H2('Select a disease to analyze:'),
+        html.Div([
+            html.Div(
+                dbc.RadioItems(
+                    id='disease_input',
+                    className='btn-group',
+                    inputClassName='btn-check',
+                    labelClassName="btn btn-outline-light",
+                    labelCheckedClassName="btn btn-light",
+                    options=[
+                        {"label": "Kawasaki", "value": 1},
+                        {"label": "Parkinson", "value": 2},
+                        {"label": "Melanoma", "value": 3}
+                    ],
+                    value=1,
+                    style={'width': '100%'}
+                ), style={'width': 206}
+            )
+        ], style={'margin-left': 15, 'margin-right': 15, 'display': 'flex'}),
 
-            dbc.Row([
-                dbc.Col(dcc.Graph(id='graph-3', config={'displaylogo': False})),
-                dbc.Col(dcc.Graph(id='graph-4', config={'displaylogo': False}))
-            ])
-        ], style={'width': '85%'})
-    ])
-])
+        # Sidebar - Parameters selection
+        html.Br(),
+        html.Details([
+            html.Summary('Parameters Tab(Click To Show!!!)'),
+            html.Div([
+                html.Div([
+                    html.H2('Number of genes to investigate:'),
+                    dcc.Slider(2, 14, 2,
+                        id='num_genes_input',
+                        value=8,
+                    ),
+                ]),
+                html.Div([
+                    html.H2('Patients to investigate:'),
+                    dcc.Dropdown(
+                        id='patient_selection_input',
+                        options=patient_list,
+                        value=patient_list_init,
+                        multi=True,
+                        maxHeight=250,
+                        optionHeight=30
+                    ),
+                ]),
+            ], style={'margin-left': 15, 'margin-right': 15, 'margin-top': 30}),
+        ]),
 
-# Define the callback to update the graphs
+        # Sidebar Image
+        html.Div(
+            html.Img(src='assets/Data_boost_logo.png',
+                     style={'margin-left': 15, 'margin-right': 15, 'margin-top': 30, 'width': 150})
+        ),
+    ], style={'width': 330, 'margin-left': 15, 'margin-right': 15, 'margin-top': 20, 'margin-bottom': 20}
+    ),
+
+    # Body
+    dbc.Col([
+        dbc.Row(
+            html.H2('Genes level analysis')
+        ),
+        dbc.Row([
+            dbc.Col(dcc.Graph('graph-1', config={'displaylogo': False})),
+            dbc.Col([
+                dcc.Graph('graph-2', config={'displaylogo': False}), 
+                dcc.RangeSlider(min=-6, max=6, step=1, value=[-2, 2], id='log2fold_input'),
+                dcc.Slider(min=0, max=40, step=5, value=15, id='significance_input'),
+                ])
+        ]),
+        dbc.Row(
+            html.H2('Patient level analysis')
+        ),
+        dbc.Row([
+            dbc.Col(dcc.Graph('graph-3', config={'displaylogo': False})),
+            dbc.Col(dcc.Graph('graph-4', config={'displaylogo': False}))
+        ])
+    ], style={'width': 1210, 'margin-left': 15, 'margin-top': 15, 'margin-right': 20, 'margin-bottom': 20})  # Ajuster la largeur de la colonne pour les graphiques
+], fluid=True, style={'display': 'flex'}, className='dashboard-container')
+
+####################################  I/O  ####################################
 @app.callback(
     [Output('graph-1', 'figure'),
      Output('graph-2', 'figure'),
      Output('graph-3', 'figure'),
      Output('graph-4', 'figure')],
-    [Input('disease_dropdown', 'value'),
-     Input('num_genes', 'value'),
-     Input('patient_selection', 'value')]
+    [Input('disease_input', 'value'),
+     Input('num_genes_input', 'value'),
+     Input('patient_selection_input', 'value'),
+     Input('log2fold_input', 'value'),
+     Input('significance_input', 'value')]
 )
 
-def update_graphs(selected_value, num_genes, patient_list):
+####################################  Charts Update ####################################
+def update_graphs(selected_value, num_genes_input, patient_selection_input, log2fold_input, significance_input):
     
-    num_genes = int(num_genes/2)
+    # Data Loading
+    if selected_value == 1 or selected_value == 2 or selected_value == 3:
+        conditions = [
+            (sigs['Significance'] <= significance_input) & ((sigs['log2FoldChange'] <= log2fold_input[1]) | (sigs['log2FoldChange'] >= log2fold_input[0])),
+            (sigs['Significance'] > significance_input) & (sigs['log2FoldChange'] > log2fold_input[1]),
+            (sigs['Significance'] > significance_input) & (sigs['log2FoldChange'] < log2fold_input[0])
+        ]
+        sigs['label'] = np.select(conditions, ['Not significant', 'Upregulated', 'Downregulated'], default='Not significant')
+    
+    num_genes = int(num_genes_input/2)
 
     label_df = pd.concat(
             (sigs.sort_values('sorter')[-num_genes:],
@@ -117,76 +187,15 @@ def update_graphs(selected_value, num_genes, patient_list):
     list_annotation = list(label_df['Symbol'])
 
     #########################################  Volcano plot  #########################################
-    volcano = px.scatter(sigs, 
-                    x='log2FoldChange', y='Significance', 
-                     color='label', color_discrete_map=color_map)
+    figure2 = volcano_plot(sigs, list_annotation, log2fold_input, significance_input)
 
-    volcano.update_layout(
-        title={'text': 'Volcano plot - Kawasaki Disease','x': 0.5,'xanchor': 'center'},
-        xaxis_title={'text': 'log<sub>2</sub> Fold Change','standoff': 20},
-        yaxis_title={'text': 'Significance -log<sub>10</sub>(pValue)','standoff': 20},
-        template="seaborn",
-        # width=800, height=800,
-        legend=dict(
-            x=1, y=1,
-            xanchor='right', yanchor='top',
-            bgcolor='rgba(255, 255, 255, 0)'  # Set a semi-transparent white background for the legend
-        ),
-        legend_title_text='Genes Differential Expression'
-    )
-
-    volcano.add_hline(y=1.5, line_width=1, line_dash="dash", line_color="grey")
-    volcano.add_vline(x=1, line_width=1, line_dash="dash", line_color="grey")
-    volcano.add_vline(x=-1, line_width=1, line_dash="dash", line_color="grey")
-
-    # Add annotations for each Symbol in the DataFrame
-    for symbol in list_annotation:
-        row = sigs[sigs['Symbol'] == symbol].iloc[0]
-        if row['log2FoldChange'] > 0:
-            font_color='blue'
-            shift_x = 4
-            alignment = 'left'
-        else:
-            font_color='red'
-            shift_x = -4
-            alignment = 'right'
-        volcano.add_annotation(
-            x=row['log2FoldChange'], y=row['Significance'],
-            text=row['Symbol'], font=dict(size=11, color=font_color),
-            xshift=shift_x,
-            xanchor=alignment, yanchor='middle',
-            showarrow=False, opacity=0.7
-            )
+    #########################################  PCA plot  #########################################
+    figure3 = PCA_plot(dds, grapher, patient_selection_input)
 
     #########################################  Clustermap plot  #########################################
-    filtered_grapher = grapher[grapher['ensembl_gene_id'].isin(list_annotation)]
-    columns = list(filtered_grapher[patient_list].columns.values)
-    rows = list(filtered_grapher['ensembl_gene_id'])
-    clustermap=dashbio.Clustergram(
-        data=filtered_grapher[patient_list],
-        column_labels=columns,
-        row_labels=rows,
-        color_map='RdBu',
-        color_threshold={
-            'row': 40,
-            'col': 10
-        },
-        height=600, width=800,
-        display_ratio=[0.05, 0.1],
-        tick_font={'size':10}
-    )
-
-    for trace in clustermap['data']:
-        if trace['type'] == 'heatmap':
-            trace['showscale'] = False
-
-    fig1 = px.scatter(sigs, x='baseMean', y='log2FoldChange', title='Scatter Plot 1')
-    fig2 = px.scatter(sigs, x='baseMean', y='log2FoldChange', title='Scatter Plot 1')
-    fig3 = px.scatter(sigs, x='baseMean', y='log2FoldChange', title='Scatter Plot 1')
-    fig4 = px.scatter(sigs, x='baseMean', y='log2FoldChange', title='Scatter Plot 2')
+    figure4 = clustermap_plot(grapher, list_annotation, patient_selection_input)
     
-    return fig4, volcano, fig3, clustermap
+    return fig, figure2, figure3, figure4
 
-# Run the app
-if __name__ == '__main__':
-    app.run_server(debug=True, use_reloader=False, port=8050)
+if __name__ == "__main__":
+    app.run_server(debug=True)
