@@ -22,9 +22,6 @@ import dash_bio as dashbio
 # Biocomputing related packages
 from pydeseq2.dds import DeseqDataSet
 from pydeseq2.ds import DeseqStats
-from sanbomics.tools import id_map
-from sanbomics.plots import volcano
-import scanpy as sc # PCA library
 
 color_map = {
     'Not significant': '#D3D3D3',  # tomato color
