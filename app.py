@@ -21,7 +21,7 @@ import dash_bootstrap_components as dbc
 import dash_bio as dashbio
 
 # Functions
-from charts import *
+from src.charts import *
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(current_dir)
