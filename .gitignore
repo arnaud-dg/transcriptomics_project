@@ -1,6 +1,11 @@
 *.pkl
-*.csv
-*.ipynb
 *.txt
 *.obo
 notebooks/gene2go
+notebooks/.ipynb_checkpoints
+notebooks/__pycache__
+*.CEL.gz
+models/
+notebooks/gene2go
+venv_omics/
+

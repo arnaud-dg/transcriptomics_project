@@ -1,0 +1,76 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" version="24.8.6">
+  <diagram name="Page-1" id="ihzf0vHyjzr1MfLOUPA0">
+    <mxGraphModel dx="1232" dy="1048" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="6jcw3qI2UCM0UH-JRu-4-6" value="" style="shape=trapezoid;perimeter=trapezoidPerimeter;whiteSpace=wrap;html=1;fixedSize=1;rotation=-180;size=90;sketch=1;curveFitting=1;jiggle=2;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
+          <mxGeometry x="180" y="250" width="360" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="6jcw3qI2UCM0UH-JRu-4-7" value="" style="shape=trapezoid;perimeter=trapezoidPerimeter;whiteSpace=wrap;html=1;fixedSize=1;rotation=-180;size=90;sketch=1;curveFitting=1;jiggle=2;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
+          <mxGeometry x="80" y="120" width="560" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="6jcw3qI2UCM0UH-JRu-4-8" value="" style="shape=trapezoid;perimeter=trapezoidPerimeter;whiteSpace=wrap;html=1;fixedSize=1;rotation=-180;size=20;sketch=1;curveFitting=1;jiggle=2;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+          <mxGeometry x="270" y="390" width="180" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="6jcw3qI2UCM0UH-JRu-4-9" value="" style="shape=trapezoid;perimeter=trapezoidPerimeter;whiteSpace=wrap;html=1;fixedSize=1;rotation=-180;size=20;sketch=1;curveFitting=1;jiggle=2;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+          <mxGeometry x="290" y="530" width="140" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="6jcw3qI2UCM0UH-JRu-4-12" value="Gene Ontology plot" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontSize=22;" parent="1" vertex="1">
+          <mxGeometry x="160" y="120" width="400" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="6jcw3qI2UCM0UH-JRu-4-13" value="Volcano plot" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontSize=22;" parent="1" vertex="1">
+          <mxGeometry x="240" y="250" width="240" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="6jcw3qI2UCM0UH-JRu-4-14" value="Principal Component Analaysis" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontSize=22;" parent="1" vertex="1">
+          <mxGeometry x="290" y="390" width="140" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="6jcw3qI2UCM0UH-JRu-4-15" value="Cluster&lt;div style=&quot;font-size: 22px;&quot;&gt;map&lt;/div&gt;" style="text;strokeColor=none;align=center;fillColor=none;html=1;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontSize=22;" parent="1" vertex="1">
+          <mxGeometry x="310" y="530" width="100" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="6jcw3qI2UCM0UH-JRu-4-16" value="Understand the main gene families, positively or negatively, implied in the disease" style="rounded=1;whiteSpace=wrap;html=1;sketch=1;curveFitting=1;jiggle=2;shadow=1;fontSize=20;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" parent="1" vertex="1">
+          <mxGeometry x="755" y="119" width="325" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="6jcw3qI2UCM0UH-JRu-4-17" value="Identify the main genes, positively or negatively, implied in the disease" style="rounded=1;whiteSpace=wrap;html=1;sketch=1;curveFitting=1;jiggle=2;shadow=1;fontSize=20;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" parent="1" vertex="1">
+          <mxGeometry x="755" y="259" width="325" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="6jcw3qI2UCM0UH-JRu-4-18" value="Evaluate similarities between patients" style="rounded=1;whiteSpace=wrap;html=1;sketch=1;curveFitting=1;jiggle=2;shadow=1;fontSize=20;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" parent="1" vertex="1">
+          <mxGeometry x="755" y="399" width="325" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="6jcw3qI2UCM0UH-JRu-4-19" value="Define patients clusters and biomarkers" style="rounded=1;whiteSpace=wrap;html=1;sketch=1;curveFitting=1;jiggle=2;shadow=1;fontSize=20;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" parent="1" vertex="1">
+          <mxGeometry x="755" y="539" width="325" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="6jcw3qI2UCM0UH-JRu-4-20" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;sketch=1;curveFitting=1;jiggle=2;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="640" y="180" as="sourcePoint" />
+            <mxPoint x="730" y="179.5" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="6jcw3qI2UCM0UH-JRu-4-21" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;sketch=1;curveFitting=1;jiggle=2;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="540" y="319" as="sourcePoint" />
+            <mxPoint x="730" y="318.5" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="6jcw3qI2UCM0UH-JRu-4-22" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;sketch=1;curveFitting=1;jiggle=2;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="510" y="459" as="sourcePoint" />
+            <mxPoint x="730" y="458.5" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="6jcw3qI2UCM0UH-JRu-4-23" value="" style="shape=flexArrow;endArrow=classic;html=1;rounded=0;sketch=1;curveFitting=1;jiggle=2;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="480" y="600" as="sourcePoint" />
+            <mxPoint x="730" y="598.5" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="wouI9KUr5YDEaoyo_Ngu-1" value="Genes" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;textDirection=vertical-lr;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry y="120" width="50" height="260" as="geometry" />
+        </mxCell>
+        <mxCell id="wouI9KUr5YDEaoyo_Ngu-2" value="Patients" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;textDirection=vertical-lr;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry y="390" width="50" height="270" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
