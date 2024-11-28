@@ -46,16 +46,12 @@ def volcano_plot(df, list_annotation, log2fold_input, significance_input, diseas
     title_label = 'Volcano plot - ' + disease_title
 
     figure.update_layout(
-         title={'text': f'<b>{title_label}</b>',  # Utilisation des balises HTML pour le gras
-           'x': 0.5,
-           'xanchor': 'center',
-           'font': {'size': 16, 'color': '#555555', 'family': 'Poppins'}},
-        xaxis_title={'text': '<i>Regulation, log<sub>2</sub> Fold Change</i>',  # Utilisation des balises HTML pour l'italique
-             'standoff': 16,
-             'font': {'family': 'Poppins', 'size': 13, 'color': 'black'}}
-        yaxis_title={'text': '<i>Significance, -log<sub>10</sub>(pValue)</i>',  # Utilisation des balises HTML pour l'italique
-             'standoff': 16,
-             'font': {'family': 'Poppins', 'size': 13, 'color': 'black'}}
+        title={'text': title_label,'x': 0.5,'xanchor': 'center',
+               'font': {'size': 16, 'color': '#555555', 'family': 'Poppins'}},
+        xaxis_title={'text': 'Regulation, log<sub>2</sub> Fold Change','standoff': 16,
+                     'font': {'family': 'Poppins', 'size': 13, 'color': 'black'}},
+        yaxis_title={'text': 'Significance, -log<sub>10</sub>(pValue)','standoff': 16,
+                     'font': {'family': 'Poppins', 'size': 13, 'color': 'black'}},
         template="seaborn",
         height=480,
         margin=dict(l=10, r=10, t=30, b=0),
@@ -66,6 +62,11 @@ def volcano_plot(df, list_annotation, log2fold_input, significance_input, diseas
         ),
         legend_title_text='Genes Differential Expression',
         paper_bgcolor='rgba(0, 0, 0, 0)',  # Fond transparent
+    )
+
+    figure.update_layout(
+        xaxis={'title': {'font': {'family': 'Poppins', 'size': 13, 'color': 'black'}, 'text': 'Regulation, log<sub>2</sub> Fold Change'}},
+        yaxis={'title': {'font': {'family': 'Poppins', 'size': 13, 'color': 'black'}, 'text': 'Significance, -log<sub>10</sub>(pValue)'}}
     )
 
     figure.add_hline(y=significance_input, line_width=1, line_dash="dash", line_color="grey")
