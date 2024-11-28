@@ -6,6 +6,7 @@ import seaborn as sns
 import scipy.stats as stats
 import pickle
 
+
 # Graphical packages
 import matplotlib.pyplot as plt
 import plotly.express as px
@@ -22,6 +23,8 @@ import dash_bio as dashbio
 # Biocomputing related packages
 from pydeseq2.dds import DeseqDataSet
 from pydeseq2.ds import DeseqStats
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
 
 color_map = {
     'Not significant': '#D3D3D3',  # tomato color
@@ -89,7 +92,7 @@ def volcano_plot(df, list_annotation, log2fold_input, significance_input, diseas
 
 #########################################  Gene ontology plot  #########################################
 def create_go_plot(go_data, disease_title):
-    """Create GO enrichment plot using plotly"""
+    """Create GO enrichment plot using plotly with consistent styling"""
     # Filter for minimum number of genes
     go_data = go_data[go_data.n_genes > 1]
     
@@ -97,11 +100,14 @@ def create_go_plot(go_data, disease_title):
     n_terms = 20
     top_GO = go_data.nsmallest(n_terms, 'p_corr')
     
-    # Define colors for each GO class
+    # Truncate long term names
+    top_GO['term_display'] = top_GO['term'].apply(lambda x: x[:27] + '...' if len(x) > 30 else x)
+    
+    # Define colors for each GO class with updated palette
     class_colors = {
-        'biological_process': '#FF6B6B',
-        'cellular_component': '#4ECDC4',
-        'molecular_function': '#4B7BEC'
+        'biological_process': '#FF881F',  # Match the orange from PCA
+        'cellular_component': '#4F6780',  # Match the blue-grey from PCA
+        'molecular_function': '#7A9CC6'   # Intermediate shade
     }
     
     # Create traces for each class
@@ -113,12 +119,17 @@ def create_go_plot(go_data, disease_title):
             traces.append(
                 go.Scatter(
                     x=-np.log10(class_data['p_corr']),
-                    y=class_data['term'],
+                    y=class_data['term_display'],
                     mode='markers',
                     name=go_class.replace('_', ' ').title(),
                     marker=dict(
                         color=class_colors[go_class],
                         size=10
+                    ),
+                    hovertemplate=(
+                        "<b>%{y}</b><br>" +
+                        "p-value: %{x:.2f}<br>" +
+                        "<extra></extra>"
                     )
                 )
             )
@@ -126,33 +137,72 @@ def create_go_plot(go_data, disease_title):
     # Create figure
     figure = go.Figure(data=traces)
     
-    # Update layout
+    # Update layout to match PCA plot style
     figure.update_layout(
-        title={'text': f'Top Enriched GO Terms - {disease_title}',
-               'x': 0.5,
-               'xanchor': 'center',
-               'font': {'size': 16, 'color': '#555555', 'family': 'Poppins', 'weight': 'bold'}},
-        xaxis_title={'text': '-log10(Corrected p-value)',
-                    'standoff': 16,
-                    'font': {'family': 'Poppins', 'size': 13, 'color': 'black', 'style': 'italic'}},
-        yaxis_title={'text': 'GO Terms',
-                    'standoff': 16,
-                    'font': {'family': 'Poppins', 'size': 13, 'color': 'black', 'style': 'italic'}},
+        plot_bgcolor='#EAEAF2',
+        paper_bgcolor='rgba(0,0,0,0)',
+        title={
+            'text': f'GO Term Enrichment Analysis - {disease_title}',
+            'x': 0.5,
+            'y': 0.95,
+            'xanchor': 'center',
+            'yanchor': 'middle',
+            'font': {
+                'size': 18,
+                'color': '#555555',
+                'family': 'Poppins'
+            }
+        },
+        xaxis_title={
+            'text': '-log₁₀(Adjusted p-value)',
+            'standoff': 16,
+            'font': {
+                'family': 'Poppins',
+                'size': 13,
+                'color': 'black'
+            }
+        },
+        yaxis_title={
+            'text': 'GO Terms',
+            'standoff': 16,
+            'font': {
+                'family': 'Poppins',
+                'size': 13,
+                'color': 'black'
+            }
+        },
+        legend={
+            'x': 0.5,
+            'y': -0.15,
+            'xanchor': 'center',
+            'yanchor': 'top',
+            'orientation': 'h',
+            'bgcolor': 'rgba(255, 255, 255, 0)',
+            'title_text': 'GO Categories'
+        },
         height=480,
-        template="seaborn",
-        showlegend=True,
-        legend=dict(
-            x=1.05,
-            y=1,
-            xanchor='left',
-            yanchor='top',
-            bgcolor='rgba(255, 255, 255, 0.8)'
-        ),
-        margin=dict(l=10, r=100, t=30, b=0),
-        yaxis=dict(
-            tickfont=dict(size=10),
-            automargin=True
-        )
+        margin=dict(l=10, r=10, t=50, b=70),
+        showlegend=True
+    )
+    
+    # Update axes with white background grid
+    figure.update_xaxes(
+        showgrid=True,
+        gridwidth=1,
+        gridcolor='white',
+        zeroline=True,
+        zerolinewidth=1,
+        zerolinecolor='white'
+    )
+    
+    figure.update_yaxes(
+        showgrid=True,
+        gridwidth=1,
+        gridcolor='white',
+        zeroline=True,
+        zerolinewidth=1,
+        zerolinecolor='white',
+        tickfont=dict(size=10)
     )
     
     return figure
@@ -189,38 +239,108 @@ def clustermap_plot(grapher, list_annotation, patient_list):
     return figure
 
 #########################################  PCA plot  #########################################
-def PCA_plot(dds, grapher, patient_list, disease_title):
 
-    positions = [i for i, x in enumerate(list(grapher.columns)) if x in patient_list]
-    dds_subset = dds[positions , :] # sigs[sigs.Symbol.isin(list_interest_genes)].index
-    sc.pp.pca(dds_subset)
-    X_pca = dds_subset.X
-    pca_coords = dds_subset.obsm['X_pca']
-    explained_variance_ratio = dds_subset.uns['pca']['variance_ratio']
-    # Create axis labels, with explained variance percentage
-    x_label = f"PCA1 (Explained variance {explained_variance_ratio[0]*100:.2f}%)"
-    y_label = f"PCA2 (Explained variance {explained_variance_ratio[1]*100:.2f}%)"
+def PCA_plot(grapher, patient_list, disease_title):
+
+    # Prepare data
+    pca_data = grapher[patient_list]
+    
+    # Standardize the features
+    scaler = StandardScaler()
+    data_scaled = scaler.fit_transform(pca_data.T)
+    
+    # Perform PCA
+    pca = PCA(n_components=2)
+    pca_coords = pca.fit_transform(data_scaled)
+    
+    # Create DataFrame for plotting
+    pca_df = pd.DataFrame(pca_coords, columns=['PC1', 'PC2'])
+    if disease_title == 'Kawasaki Disease':
+        pca_df['Condition'] = ['Sick Patients' if 'KD' in p else 'Control Patients' for p in patient_list]
+    elif disease_title == 'SARS-CoV-2':
+        pca_df['Condition'] = ['Sick Patients' if 'INF' in p else 'Control Patients' for p in patient_list]
+    
+    # Create axis labels with explained variance percentage
+    x_label = f"PC1 (Explained variance {pca.explained_variance_ratio_[0]*100:.2f}%)"
+    y_label = f"PC2 (Explained variance {pca.explained_variance_ratio_[1]*100:.2f}%)"
     title_label = 'Principal Component Analysis - ' + disease_title
 
-    pca_df = pd.DataFrame(pca_coords[:,:2], columns=['PCA1', 'PCA2'])
-    figure = px.scatter(pca_df, x='PCA1', y='PCA2', color=list(dds_subset.obs.values.flatten()), color_discrete_map=color_map_patients)
+    # Create the plot
+    figure = px.scatter(
+        pca_df, 
+        x='PC1', 
+        y='PC2', 
+        color='Condition',
+        color_discrete_map=color_map_patients,
+        hover_name=patient_list,
+        hover_data={'PC1': ':.2f', 'PC2': ':.2f', 'Condition': False}
+    )
+    
+    # Update layout with transparent background and centered title
     figure.update_layout(
-        title={'text': title_label,'x': 0.5,'xanchor': 'center',
-               'font': {'size': 16, 'color': '#555555', 'family': 'Poppins', 'weight': 'bold'}},
-        xaxis_title={'text': x_label,'standoff': 16,
-                     'font': {'family': 'Poppins', 'size': 13, 'color': 'black', 'style': 'italic'}},
-        yaxis_title={'text': y_label,'standoff': 16,
-                     'font': {'family': 'Poppins', 'size': 13, 'color': 'black', 'style': 'italic'}},
-        legend=dict(
-            x=1, y=1,
-            xanchor='right', yanchor='top',
-            bgcolor='rgba(255, 255, 255, 0)'  # Set a semi-transparent white background for the legend
-        ),
+        plot_bgcolor='#EAEAF2', 
+        paper_bgcolor='rgba(0,0,0,0)',
+        title={
+            'text': title_label,
+            'x': 0.5,
+            'y': 0.95,
+            'xanchor': 'center',
+            'yanchor': 'middle',
+            'font': {
+                'size': 18, 
+                'color': '#555555', 
+                'family': 'Poppins'
+            }
+        },
+        xaxis_title={
+            'text': x_label,
+            'standoff': 16,
+            'font': {
+                'family': 'Poppins', 
+                'size': 13, 
+                'color': 'black'
+            }
+        },
+        yaxis_title={
+            'text': y_label,
+            'standoff': 16,
+            'font': {
+                'family': 'Poppins', 
+                'size': 13, 
+                'color': 'black'
+            }
+        },
+        legend={
+            'x': 0.5,
+            'y': -0.15,
+            'xanchor': 'center',
+            'yanchor': 'top',
+            'orientation': 'h',
+            'bgcolor': 'rgba(255, 255, 255, 0)',
+            'title_text': 'Patient Condition'
+        },
         template="seaborn",
-        legend_title_text='Patient Condition',
-        paper_bgcolor='rgba(0, 0, 0, 0)',
         height=480,
-        margin=dict(l=10, r=10, t=30, b=0),
+        margin=dict(l=10, r=10, t=50, b=70)  # Adjusted bottom margin for legend
+    )
+    
+    # Update axes with white background grid
+    figure.update_xaxes(
+        showgrid=True,
+        gridwidth=1,
+        gridcolor='white',
+        zeroline=True,
+        zerolinewidth=1,
+        zerolinecolor='white'
+    )
+    
+    figure.update_yaxes(
+        showgrid=True,
+        gridwidth=1,
+        gridcolor='white',
+        zeroline=True,
+        zerolinewidth=1,
+        zerolinecolor='white'
     )
 
     return figure
