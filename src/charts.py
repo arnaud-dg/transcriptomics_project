@@ -50,10 +50,12 @@ def volcano_plot(df, list_annotation, log2fold_input, significance_input, diseas
            'x': 0.5,
            'xanchor': 'center',
            'font': {'size': 16, 'color': '#555555', 'family': 'Poppins'}},
-        xaxis_title={'text': 'Regulation, log<sub>2</sub> Fold Change','standoff': 16,
-                     'font': {'family': 'Poppins', 'size': 13, 'color': 'black', 'style': 'italic'}},
-        yaxis_title={'text': 'Significance, -log<sub>10</sub>(pValue)','standoff': 16,
-                     'font': {'family': 'Poppins', 'size': 13, 'color': 'black', 'style': 'italic'}},
+        xaxis_title={'text': '<i>Regulation, log<sub>2</sub> Fold Change</i>',  # Utilisation des balises HTML pour l'italique
+             'standoff': 16,
+             'font': {'family': 'Poppins', 'size': 13, 'color': 'black'}}
+        yaxis_title={'text': '<i>Significance, -log<sub>10</sub>(pValue)</i>',  # Utilisation des balises HTML pour l'italique
+             'standoff': 16,
+             'font': {'family': 'Poppins', 'size': 13, 'color': 'black'}}
         template="seaborn",
         height=480,
         margin=dict(l=10, r=10, t=30, b=0),
