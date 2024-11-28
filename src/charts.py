@@ -46,8 +46,10 @@ def volcano_plot(df, list_annotation, log2fold_input, significance_input, diseas
     title_label = 'Volcano plot - ' + disease_title
 
     figure.update_layout(
-        title={'text': title_label,'x': 0.5,'xanchor': 'center',
-               'font': {'size': 16, 'color': '#555555', 'family': 'Poppins', 'weight': 'bold'}},
+         title={'text': f'<b>{title_label}</b>',  # Utilisation des balises HTML pour le gras
+           'x': 0.5,
+           'xanchor': 'center',
+           'font': {'size': 16, 'color': '#555555', 'family': 'Poppins'}},
         xaxis_title={'text': 'Regulation, log<sub>2</sub> Fold Change','standoff': 16,
                      'font': {'family': 'Poppins', 'size': 13, 'color': 'black', 'style': 'italic'}},
         yaxis_title={'text': 'Significance, -log<sub>10</sub>(pValue)','standoff': 16,
