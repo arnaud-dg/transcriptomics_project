@@ -6,7 +6,6 @@ import seaborn as sns
 import scipy.stats as stats
 import pickle
 
-
 # Graphical packages
 import matplotlib.pyplot as plt
 import plotly.express as px
@@ -26,15 +25,22 @@ from pydeseq2.ds import DeseqStats
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
+# Define colors for each GO class with updated palette
+class_colors = {
+    'biological_process': '#FF881F', 
+    'cellular_component': '#4F6780', 
+    'molecular_function': '#7A9CC6'
+}
+
 color_map = {
-    'Not significant': '#D3D3D3',  # tomato color
-    'Upregulated': '#1E90FF',  # tomato color
-    'Downregulated': '#FF6347',  # dodger blue color
+    'Not significant': '#D3D3D3',
+    'Upregulated': '#1E90FF',
+    'Downregulated': '#FF6347',
 }
 
 color_map_patients = {
-    'Condition_1': '#FF881F',  # tomato color
-    'Condition_2': '#4F6780',  # tomato color
+    'Condition_1': '#FF881F',
+    'Condition_2': '#4F6780',
 }
 
 #########################################  Volcano plot  #########################################
@@ -58,10 +64,10 @@ def volcano_plot(df, list_annotation, log2fold_input, significance_input, diseas
         legend=dict(
             x=1, y=1,
             xanchor='right', yanchor='top',
-            bgcolor='rgba(255, 255, 255, 0)'  # Set a semi-transparent white background for the legend
+            bgcolor='rgba(255, 255, 255, 0)' 
         ),
         legend_title_text='Genes Differential Expression',
-        paper_bgcolor='rgba(0, 0, 0, 0)',  # Fond transparent
+        paper_bgcolor='rgba(0, 0, 0, 0)',
     )
 
     figure.update_layout(
@@ -107,13 +113,6 @@ def create_go_plot(go_data, disease_title):
     
     # Truncate long term names
     top_GO['term_display'] = top_GO['term'].apply(lambda x: x[:27] + '...' if len(x) > 30 else x)
-    
-    # Define colors for each GO class with updated palette
-    class_colors = {
-        'biological_process': '#FF881F',  # Match the orange from PCA
-        'cellular_component': '#4F6780',  # Match the blue-grey from PCA
-        'molecular_function': '#7A9CC6'   # Intermediate shade
-    }
     
     # Create traces for each class
     traces = []
@@ -231,11 +230,7 @@ def clustermap_plot(grapher, list_annotation, patient_list):
         tick_font={'size':10}
     )
 
-    figure.update_layout(
-        height=470,
-        width=570,
-        margin=dict(l=20, r=0, t=10, b=10), 
-        margin_pad=0)
+    figure.update_layout(height=470, width=570, margin=dict(l=20, r=0, t=10, b=10), margin_pad=0)
 
     for trace in figure['data']:
         if trace['type'] == 'heatmap':
@@ -326,7 +321,7 @@ def PCA_plot(grapher, patient_list, disease_title):
         },
         template="seaborn",
         height=480,
-        margin=dict(l=10, r=10, t=50, b=70)  # Adjusted bottom margin for legend
+        margin=dict(l=10, r=10, t=50, b=70)
     )
     
     # Update axes with white background grid
