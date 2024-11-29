@@ -1,7 +1,7 @@
 # OMIX Dashboard
 
 ## Overview
-**OMIX** is a web-based dashboard designed to assist pharmaceutical R&D teams in performing **Differential Expression Analysis** with transcriptomics data. The tool provides interactive visualizations and analysis capabilities for gene expression data.
+(**The OMIX Buddy**)[https://the-omix-buddy-6e7889e55137.herokuapp.com/] is a web-based dashboard designed to assist pharmaceutical R&D teams in performing **Differential Expression Analysis** with transcriptomics data. The tool provides interactive visualizations and analysis capabilities for gene expression data.
 
 ---
 
